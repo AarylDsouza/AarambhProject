@@ -1,0 +1,43 @@
+from typing import Union
+from fastapi import FastAPI
+import oracledb
+
+oracledb.init_oracle_client(lib_dir=r"C:\Users\b.aloksingh.dixit\Downloads\instantclient-basiclite-windows.x64-21.9.0.0.0dbru\instantclient_21_9")
+
+username = 'SYSTEM'
+password = '123456'
+
+url='localhost:1521/xe'
+
+connection = oracledb.connect(user=username, password=password, dsn=url)
+
+cursor = connection.cursor()
+
+app = FastAPI()
+
+
+
+@app.get("/table1")
+def select_from_table():
+    cursor.execute('select COUNTRYREGION,ROUND((TOTALCASES/POPULATION),4) AS PERCENTAGE FROM (select COUNTRYREGION ,POPULATION,TOTALCASES from WORLDMETER WHERE POPULATION IS NOT NULL) WHERE ROWNUM <= 5 ORDER BY PERCENTAGE DESC')
+    result = cursor.fetchall()
+    return {"description": result}
+
+@app.get("/table2")
+def select_from_table():
+    cursor.execute('select COUNTRYREGION,ROUND((ACTIVECASES/POPULATION),4) AS PERCENTAGE FROM (select COUNTRYREGION ,POPULATION,ACTIVECASES from WORLDMETER WHERE POPULATION IS NOT NULL) WHERE ROWNUM <= 5 ORDER BY PERCENTAGE DESC')
+    result = cursor.fetchall()
+    return {"description": result}
+
+@app.get("/table3")
+def select_from_table():
+    cursor.execute('SELECT WHOREGION, TOTALDEATHS AS NUMOFDEATHS FROM WORLDMETER WHERE ROWNUM <= 5 GROUP BY WHOREGION, TOTALDEATHS ORDER BY TOTALDEATHS DESC')
+
+
+    result = cursor.fetchall()
+    return {"description": result}
+
+
+if __name__ == '__main__':
+    import uvicorn
+    uvicorn.run(app, host="localhost", port=8011)
